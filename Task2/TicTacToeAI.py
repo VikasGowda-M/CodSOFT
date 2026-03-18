@@ -1,55 +1,107 @@
-#tic-tac-toe AI:
-import random
-def print_board(board):
-    for row in board:
-        print(" | ".join(row))
-        print("-" * 9)
-def check_winner(board, player):
-    for row in board:
-        if all(s == player for s in row):
+import math
+
+
+board = [" " for _ in range(9)]
+
+
+def print_board():
+    for i in range(3):
+        print(board[i*3] + " | " + board[i*3+1] + " | " + board[i*3+2])
+        if i < 2:
+            print("--+---+--")
+
+
+def check_winner(b, player):
+    win_positions = [
+        [0,1,2],[3,4,5],[6,7,8],  
+        [0,3,6],[1,4,7],[2,5,8],  
+        [0,4,8],[2,4,6]           
+    ]
+    for pos in win_positions:
+        if b[pos[0]] == b[pos[1]] == b[pos[2]] == player:
             return True
-    for col in range(3):
-        if all(board[row][col] == player for row in range(3)):
-            return True
-    if all(board[i][i] == player for i in range(3)):
-        return True
-    if all(board[i][2 - i] == player for i in range(3)):
-        return True
     return False
-def get_available_moves(board):
-    return [(i, j) for i in range(3) for j in range(3) if board[i][j] == " "]
-def ai_move(board):
-    moves = get_available_moves(board)
-    return random.choice(moves) if moves else None
-def main():
-    board = [[" " for _ in range(3)] for _ in range(3)]
-    print("Welcome to Tic-Tac-Toe! You are 'X' and the AI is 'O'.")
-    print_board(board)
+
+
+def is_draw(b):
+    return " " not in b
+
+
+def minimax(b, depth, is_max):
+    if check_winner(b, "O"):
+        return 1
+    if check_winner(b, "X"):
+        return -1
+    if is_draw(b):
+        return 0
+
+    if is_max:
+        best = -math.inf
+        for i in range(9):
+            if b[i] == " ":
+                b[i] = "O"
+                score = minimax(b, depth + 1, False)
+                b[i] = " "
+                best = max(score, best)
+        return best
+    else:
+        best = math.inf
+        for i in range(9):
+            if b[i] == " ":
+                b[i] = "X"
+                score = minimax(b, depth + 1, True)
+                b[i] = " "
+                best = min(score, best)
+        return best
+
+
+def best_move():
+    best_score = -math.inf
+    move = -1
+    for i in range(9):
+        if board[i] == " ":
+            board[i] = "O"
+            score = minimax(board, 0, False)
+            board[i] = " "
+            if score > best_score:
+                best_score = score
+                move = i
+    return move
+
+
+def play():
+    print("Positions: 0-8")
+    print_board()
+
     while True:
-        try:
-            move = input("Enter your move (row and column, e.g., 1 1): ")
-            row, col = map(int, move.split())
-            if board[row][col] != " ":
-                print("Invalid move. Try again.")
-                continue
-            board[row][col] = "X"
-            print_board(board)
-            if check_winner(board, "X"):
-                print("Congratulations! You win!")
-                break
-            ai_row, ai_col = ai_move(board)
-            if ai_row is not None:
-                board[ai_row][ai_col] = "O"
-                print("AI's move:")
-                print_board(board)
-                if check_winner(board, "O"):
-                    print("AI wins! Better luck next time.")
-                    break
-            else:
-                print("It's a draw!")
-                break
-        except (ValueError, IndexError):
-            print("Invalid input. Please enter row and column as numbers between 0 and 2.")
-    if __name__ == "__main__":
-        main()
-    #end of code
+      
+        user = int(input("Enter position (0-8): "))
+        if board[user] != " ":
+            print("Invalid move!")
+            continue
+
+        board[user] = "X"
+        print_board()
+
+        if check_winner(board, "X"):
+            print("You win!")
+            break
+        if is_draw(board):
+            print("Draw!")
+            break
+
+        
+        ai = best_move()
+        board[ai] = "O"
+        print("\nAI move:")
+        print_board()
+
+        if check_winner(board, "O"):
+            print("AI wins!")
+            break
+        if is_draw(board):
+            print("Draw!")
+            break
+
+
+play()
